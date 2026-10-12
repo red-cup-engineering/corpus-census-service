@@ -1,0 +1,41 @@
+{
+  "name": "@red-cup-engineering/corpus-census-service",
+  "version": "0.1.0",
+  "description": "Census of every content carrier a revision tracks: ownership, kind, frontmatter, visibility, schema admission, link, wikilink and citekey resolution, and the authorship demand nothing answers yet.",
+  "type": "module",
+  "exports": {
+    ".": "./src/corpus-census.mjs",
+    "./package.json": "./package.json",
+    "./knowledge-debt-reports": "./src/knowledge-debt-reports.mjs",
+    "./corpus-ledger": "./src/corpus-ledger.mjs"
+  },
+  "bin": {
+    "census-corpus": "scripts/census-corpus.mjs"
+  },
+  "files": [
+    "src/",
+    "scripts/"
+  ],
+  "scripts": {
+    "check": "node --check src/*.mjs && node --check scripts/*.mjs && node --check test/*.test.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@red-cup-engineering/bibliography-engineering-services-section": "workspace:*",
+    "@red-cup-engineering/carrier-kind-engineering-services-section": "workspace:*",
+    "@red-cup-engineering/computer-file-engineering-services-section": "workspace:*",
+    "@red-cup-engineering/git-services-section": "workspace:*",
+    "@red-cup-engineering/javascript-file-services-section": "workspace:*",
+    "@red-cup-engineering/javascript-node-services-section": "workspace:*",
+    "@red-cup-engineering/markdown-engineering-services-section": "workspace:*",
+    "@red-cup-engineering/organizing": "workspace:*",
+    "@red-cup-engineering/term-engineering-services-section": "workspace:*"
+  },
+  "devDependencies": {
+    "@red-cup-engineering/feltos": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,15 @@
+{
+  "kind": "derivation-record",
+  "verdict": "derivation",
+  "subject": "facts.v8, the v8-serialized per-carrier facts cache of census-corpus (41,381,153 bytes, written 2026-10-02)",
+  "generator": "scripts/census-corpus.mjs of this service",
+  "inputs": [
+    "the carriers a revision tracks (keyed by blob id, extension, claiming schema and filename)",
+    "src/carrier-facts.mjs; the cache directory name b51a3a57ad962acdd4f50df70fa5a8f44cdd37bc4f95acef87d867e93c622904 is the module closure digest of that file when the cache was written"
+  ],
+  "command": "census-corpus --root <repository> --cache-dir <new-cache-directory>  # cold run about 45 s",
+  "why": "the service README names this store a cache: a change to the code that reads facts starts a fresh store and prunes the stale ones, so it is never an input of a record",
+  "stored": "nothing",
+  "judged": "2026-10-09",
+  "by": "Red Cup Engineer Senior (Claude), request debt-2026-10-09-home-and-state-in-info, requirement bulk"
+}
