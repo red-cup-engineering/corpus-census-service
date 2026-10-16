@@ -1,7 +1,7 @@
 import { posix } from "node:path";
-import { readMarkdownFrontmatter } from "@red-cup-engineering/markdown-engineering-services-section/read-markdown-frontmatter";
-import { readMarkdownSource } from "@red-cup-engineering/markdown-engineering-services-section/read-markdown-structure";
-import { projectMarkdownFeatures } from "@red-cup-engineering/markdown-engineering-services-section/read-markdown-features";
+import { readMarkdownFrontmatter } from "@red-cup-engineering/read-markdown-frontmatter-service";
+import { readMarkdownSource } from "@red-cup-engineering/read-markdown-structure-service";
+import { projectMarkdownFeatures } from "@red-cup-engineering/read-markdown-features-service";
 import { recognizeTermMarkdown } from "@red-cup-engineering/term-engineering-services-section/term-carrier";
 import { glossaryAudienceAdmits } from "@red-cup-engineering/term-engineering-services-section/glossary-skos";
 import { CITEKEY, recognizeBibliographyMarkdown } from "@red-cup-engineering/bibliography-engineering-services-section/carrier";
