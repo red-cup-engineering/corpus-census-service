@@ -2,6 +2,11 @@
   "name": "@red-cup-engineering/corpus-census-service",
   "version": "0.1.1",
   "description": "Census of every content carrier a revision tracks: ownership, kind, frontmatter, visibility, schema admission, link, wikilink and citekey resolution, and the authorship demand nothing answers yet.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/computer-systems-engineering-services-section.git",
+    "directory": "services/computer-knowledge-systems-services-section/services/corpus-census-service"
+  },
   "type": "module",
   "exports": {
     ".": "./src/corpus-census.mjs",
