@@ -72,6 +72,65 @@ test("the worktree is checked as it would be committed, and assertions bound a s
   assert.equal(repository.census("--section", "services/b-section", "--assert", "brokenLinks<=0").status, 0);
 });
 
+test("persisted wanted JSON separates unresolved pages, citations, and broken paths without minting Work", (t) => {
+  const repository = fixture();
+  t.after(repository.done);
+  repository.write(".gitignore", ".cache/\nrecords/\n");
+  const filenames = ["one", "two", "three"].map(name => "services/a-section/docs/" + name + ".md");
+  for (const filename of filenames) {
+    repository.write(filename,
+      "# Source\n\nSee [[no such concept]] and [@unknown2099] and [missing](missing.md).\n");
+  }
+  repository.write(filenames[0],
+    "# Source\n\nSee [[no such concept]] and [@unknown2099] and [missing](missing.md) and [escape](../../../../absent.md).\n");
+  const firstCommit = repository.commit("three independent unresolved source referrers");
+  const outDir = join(repository.root, "records");
+  const run = () => spawnSync(process.execPath, [
+    SCRIPT, "--root", repository.root, "--out-dir", outDir,
+    "--date", "2026-10-20", "--cache-dir", join(repository.root, ".cache"),
+  ], { env: { ...process.env, ...GIT_ENVIRONMENT }, encoding: "utf8" });
+  const wanted = () => JSON.parse(readFileSync(join(outDir, "wanted.json"), "utf8"));
+
+  const first = run();
+  assert.equal(first.status, 0, first.stderr);
+  const original = wanted();
+  assert.equal(original.schema, "computer-corpus-wanted.v1");
+  assert.equal(original.commit, firstCommit, "the source snapshot revision is explicit");
+  assert.equal(original.pages.length, 1);
+  assert.deepEqual(original.pages[0], {
+    target: "no such concept", referrers: 3, occurrences: 3, sample: filenames.slice().sort(),
+  });
+  assert.equal(original.references.length, 1);
+  assert.deepEqual(original.references[0], {
+    citekey: "unknown2099", referrers: 3, occurrences: 3, sample: filenames.slice().sort(),
+  });
+  assert.deepEqual(original.paths, [{
+    path: "services/a-section/docs/missing.md", referrers: 3, occurrences: 3,
+    sample: filenames.slice().sort(),
+  }], "a broken target shared by three original referrers is listed");
+  assert.equal(original.unlistedPaths, 0,
+    "an escaping source path is not turned into a fabricated missing file");
+  for (const entry of [...original.pages, ...original.references, ...original.paths]) {
+    assert.equal(Object.hasOwn(entry, "move"), false);
+    assert.equal(Object.hasOwn(entry, "approved"), false);
+    assert.equal(Object.hasOwn(entry, "conditions"), false,
+      "source lexical demand cannot supply Work acceptance or publication authority");
+  }
+
+  repository.write(filenames[0], "# Source\n\nThe first source was repaired.\n");
+  const repairedCommit = repository.commit("repair one original source referrer");
+  const repaired = run();
+  assert.equal(repaired.status, 0, repaired.stderr);
+  const latest = wanted();
+  assert.equal(latest.commit, repairedCommit);
+  assert.equal(latest.pages[0].referrers, 2);
+  assert.equal(latest.references[0].referrers, 2);
+  assert.equal(latest.paths.length, 0,
+    "the broken path drops below the three-referrer listing threshold");
+  assert.equal(latest.unlistedPaths, 1,
+    "the still-broken path remains accounted for without minting an authorship request");
+});
+
 test("the original census writes typed nonconformity reports, separate from its authorship-demand JSON", (t) => {
   const repository = fixture();
   t.after(repository.done);
