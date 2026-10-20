@@ -7,6 +7,7 @@ on:
       - 'scripts/**'
       - 'test/**'
       - 'package.json'
+      - 'package-lock.json'
   push:
     branches: [main]
     paths:
@@ -15,6 +16,7 @@ on:
       - 'scripts/**'
       - 'test/**'
       - 'package.json'
+      - 'package-lock.json'
   workflow_dispatch:
 permissions:
   contents: read
@@ -30,7 +32,7 @@ jobs:
         with:
           node-version: '24'
       - name: Install the original pinned corpus dependencies
-        run: npm install --no-audit --no-fund --ignore-scripts --fetch-retries=0 --fetch-timeout=30000
+        run: npm ci --no-audit --no-fund --ignore-scripts --fetch-retries=0 --fetch-timeout=30000
       - name: Check original code, source writer and ledger reader
         run: |
           npm run check
