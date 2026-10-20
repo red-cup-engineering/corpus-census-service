@@ -87,7 +87,7 @@ test("persisted wanted JSON separates unresolved pages, citations, and broken pa
   const firstCommit = repository.commit("three independent unresolved source referrers");
   const outDir = join(repository.root, "records");
   const run = () => spawnSync(process.execPath, [
-    SCRIPT, "--root", repository.root, "--out-dir", outDir,
+    SCRIPT, "--root", repository.root, "--agency-root", repository.root, "--out-dir", outDir,
     "--date", "2026-10-20", "--cache-dir", join(repository.root, ".cache"),
   ], { env: { ...process.env, ...GIT_ENVIRONMENT }, encoding: "utf8" });
   const wanted = () => JSON.parse(readFileSync(join(outDir, "wanted.json"), "utf8"));
@@ -138,7 +138,7 @@ test("the original census writes typed nonconformity reports, separate from its 
   repository.write(".gitignore", ".cache/\nrecords/\n");
   repository.commit("ignore the cache and records");
   const run = spawnSync(process.execPath, [
-    SCRIPT, "--root", repository.root, "--out-dir", join(repository.root, "records"),
+    SCRIPT, "--root", repository.root, "--agency-root", repository.root, "--out-dir", join(repository.root, "records"),
     "--date", "2026-10-01", "--cache-dir", join(repository.root, ".cache"),
   ], { env: { ...process.env, ...GIT_ENVIRONMENT } });
   assert.equal(run.status, 0, run.stderr.toString());

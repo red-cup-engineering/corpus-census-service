@@ -49,7 +49,8 @@ Org carriers are counted with their header, but their links are not read yet.
 
 ## Outputs
 
-`scripts/census-corpus.mjs` (bin `census-corpus`, `--root <dir> [--out-dir <dir>] [--date YYYY-MM-DD] [--revision <rev>] [--cache-dir <dir>]`) reads the revision through the house Git codec (`ls-tree`, then one `cat-file --batch`), never the working tree, and writes four files.
+`scripts/census-corpus.mjs` (bin `census-corpus`, `--root <dir> [--out-dir <dir>] [--date YYYY-MM-DD] [--revision <rev>] [--cache-dir <dir>] [--agency-root <dir>]`) reads the revision through the house Git codec (`ls-tree`, then one `cat-file --batch`), never the working tree, and writes four files.
+`--agency-root` names the address basis for section reports and defaults to the repository's `lib/`; the corpus must lie inside it. An independent repository census can explicitly select its own root as the agency root.
 `--out-dir` defaults to `services/561-group-services-section/data/records/knowledge-census-records/corpus/`.
 
 - `census/<date>.json` (`computer-corpus-census.v1`).
