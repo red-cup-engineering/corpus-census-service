@@ -65,6 +65,7 @@ Org carriers are counted with their header, but their links are not read yet.
   `pages` lists unresolved wikilink targets (pages someone linked and nobody wrote).
   `references` lists unknown citekeys.
   `paths` lists broken link targets named by at least three carriers; the rest are counted in `unlistedPaths`.
+  `pages[].target` is an unresolved *literal source wikilink*, `references[].citekey` is an unresolved citation identifier, and `paths[].path` is a source path claim. None of these is independently a newly admitted glossary Concept, an authorized content-creation request, or proof that a page is missing in a different repository. The source contains a dated revision and sample referrers, not a claim about the live installed reader. GitHub's standard Contents endpoint can omit inline content for an artifact over 1 MiB; retrieve its actual Git blob rather than treating an empty inline body as an empty/unused resource. Original producer: `censusCorpusAtRevision` in this package. Selection by an actual, authorized downstream authorship or knowledge-work consumer still requires independent evidence.
 - `reports.json` (`computer-corpus-knowledge-debt-reports.v1`).
   The knowledge ledger's nonconformity reports under `openings`, one per live section whose own carriers carry ratchet debt, largest debt first, one entry per line.
   Each entry holds the section, its debt per measure and total, and the report itself; the record also names the commit, the law, the total debt and how many sections hold 90% of it.
@@ -112,7 +113,7 @@ Its evidence is the dated census record.
 Tags are `knowledge-debt` and the owed debts' names; scope is the section and `project:knowledge-debt/<name>`, which routes it home.
 
 The ledger's enterprise record names `reports.json` under `derives`, so its own loop keeps the board where the latest derivation says, through organizing `reconcileDerivedOpenings`.
-The loop reports each derived nonconformity the board lacks, resolves each of its own standing reports the derivation no longer finds, with the derivation as evidence, and corroborates (so reopens) a resolved report the derivation finds again: a repair is verified by measuring, never by its doer's word.
+The declared loop is intended to report each derived nonconformity the board lacks, resolve its own reports the derivation no longer finds, and corroborate a resolved condition it finds again. A repair is verified by measuring, never by its doer's word; a source-declared loop is not by itself independent evidence that the original installed Work Arena has selected or executed the `reconcileDerivedOpenings` operation.
 It never touches threads other players opened.
 A derivation reaches the loop when its commit is released.
 
