@@ -76,6 +76,7 @@ test("persisted wanted JSON separates unresolved pages, citations, and broken pa
   const repository = fixture();
   t.after(repository.done);
   repository.write(".gitignore", ".cache/\nrecords/\n");
+  repository.write(A, "# A\n\nSee [b](../b-section/README.md).\n");
   const filenames = ["one", "two", "three"].map(name => "services/a-section/docs/" + name + ".md");
   for (const filename of filenames) {
     repository.write(filename,
