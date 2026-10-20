@@ -72,20 +72,100 @@ test("the worktree is checked as it would be committed, and assertions bound a s
   assert.equal(repository.census("--section", "services/b-section", "--assert", "brokenLinks<=0").status, 0);
 });
 
-test("a census posts each indebted section's signal, whose acceptance fails until the section is repaired", (t) => {
+test("persisted wanted JSON separates unresolved pages, citations, and broken paths without minting Work", (t) => {
+  const repository = fixture();
+  t.after(repository.done);
+  repository.write(".gitignore", ".cache/\nrecords/\n");
+  repository.write(A, "# A\n\nSee [b](../b-section/README.md).\n");
+  const filenames = ["one", "two", "three"].map(name => "services/a-section/docs/" + name + ".md");
+  for (const filename of filenames) {
+    repository.write(filename,
+      "# Source\n\nSee [[no such concept]] and [@unknown2099] and [missing](missing.md).\n");
+  }
+  repository.write(filenames[0],
+    "# Source\n\nSee [[no such concept]] and [@unknown2099] and [missing](missing.md) and [escape](../../../../absent.md).\n");
+  const firstCommit = repository.commit("three independent unresolved source referrers");
+  const outDir = join(repository.root, "records");
+  const run = () => spawnSync(process.execPath, [
+    SCRIPT, "--root", repository.root, "--agency-root", repository.root, "--out-dir", outDir,
+    "--date", "2026-10-20", "--cache-dir", join(repository.root, ".cache"),
+  ], { env: { ...process.env, ...GIT_ENVIRONMENT }, encoding: "utf8" });
+  const wanted = () => JSON.parse(readFileSync(join(outDir, "wanted.json"), "utf8"));
+
+  const first = run();
+  assert.equal(first.status, 0, first.stderr);
+  const original = wanted();
+  assert.equal(original.schema, "computer-corpus-wanted.v1");
+  assert.equal(original.commit, firstCommit, "the source snapshot revision is explicit");
+  assert.equal(original.pages.length, 1);
+  assert.deepEqual(original.pages[0], {
+    target: "no such concept", referrers: 3, occurrences: 3, sample: filenames.slice().sort(),
+  });
+  assert.equal(original.references.length, 1);
+  assert.deepEqual(original.references[0], {
+    citekey: "unknown2099", referrers: 3, occurrences: 3, sample: filenames.slice().sort(),
+  });
+  assert.deepEqual(original.paths, [{
+    path: "services/a-section/docs/missing.md", referrers: 3, occurrences: 3,
+    sample: filenames.slice().sort(),
+  }], "a broken target shared by three original referrers is listed");
+  assert.equal(original.unlistedPaths, 0,
+    "an escaping source path is not turned into a fabricated missing file");
+  for (const entry of [...original.pages, ...original.references, ...original.paths]) {
+    assert.equal(Object.hasOwn(entry, "move"), false);
+    assert.equal(Object.hasOwn(entry, "approved"), false);
+    assert.equal(Object.hasOwn(entry, "conditions"), false,
+      "source lexical demand cannot supply Work acceptance or publication authority");
+  }
+
+  repository.write(filenames[0], "# Source\n\nThe first source was repaired.\n");
+  const repairedCommit = repository.commit("repair one original source referrer");
+  const repaired = run();
+  assert.equal(repaired.status, 0, repaired.stderr);
+  const latest = wanted();
+  assert.equal(latest.commit, repairedCommit);
+  assert.equal(latest.pages[0].referrers, 2);
+  assert.equal(latest.references[0].referrers, 2);
+  assert.equal(latest.paths.length, 0,
+    "the broken path drops below the three-referrer listing threshold");
+  assert.equal(latest.unlistedPaths, 1,
+    "the still-broken path remains accounted for without minting an authorship request");
+});
+
+test("the original census writes typed nonconformity reports, separate from its authorship-demand JSON", (t) => {
   const repository = fixture();
   t.after(repository.done);
   repository.write(".gitignore", ".cache/\nrecords/\n");
   repository.commit("ignore the cache and records");
-  const run = spawnSync(process.execPath, [SCRIPT, "--root", repository.root, "--out-dir", join(repository.root, "records"), "--date", "2026-10-01", "--cache-dir", join(repository.root, ".cache")], { env: { ...process.env, ...GIT_ENVIRONMENT } });
+  const run = spawnSync(process.execPath, [
+    SCRIPT, "--root", repository.root, "--agency-root", repository.root, "--out-dir", join(repository.root, "records"),
+    "--date", "2026-10-01", "--cache-dir", join(repository.root, ".cache"),
+  ], { env: { ...process.env, ...GIT_ENVIRONMENT } });
   assert.equal(run.status, 0, run.stderr.toString());
-  const requests = JSON.parse(readFileSync(join(repository.root, "records", "requests.json"), "utf8"));
-  assert.deepEqual(requests.openings.map(({ section, debt }) => ({ section, debt })), [{ section: "services/a-section", debt: { brokenLinks: 1 } }]);
-  const { request } = requests.openings[0].opening.conditions[0].assay;
-  const assay = () => spawnSync(process.execPath, request.arguments, { cwd: request.directory, env: { ...process.env, ...GIT_ENVIRONMENT } }).status;
-  assert.equal(request.directory, repository.root);
-  assert.equal(assay(), 1, "the condition names real work at the commit it was derived from");
+
+  const reportPath = join(repository.root, "records", "reports.json");
+  const wantedPath = join(repository.root, "records", "wanted.json");
+  const reports = JSON.parse(readFileSync(reportPath, "utf8"));
+  const wanted = JSON.parse(readFileSync(wantedPath, "utf8"));
+  assert.equal(reports.kind, "computer-corpus-knowledge-debt-reports.v1");
+  assert.equal(wanted.schema, "computer-corpus-wanted.v1");
+  assert.deepEqual(reports.openings.map(({ section, debt }) => ({ section, debt })),
+    [{ section: "services/a-section", debt: { brokenLinks: 1 } }]);
+  const observed = reports.openings[0];
+  assert.equal(observed.opening.move, "report");
+  assert.match(observed.opening.law, /no ratchet debt/u);
+  assert.match(observed.opening.subject, /^section:/u);
+  assert.equal(observed.opening.conditions, undefined,
+    "a source observation must not turn into a self-appointed Work request");
+  assert.match(observed.reread, /--section services\/a-section --only --assert brokenLinks<=0/u);
+  assert.equal(wanted.pages.length, 0);
+  assert.equal(wanted.references.length, 0);
+  assert.equal(wanted.unlistedPaths, 1,
+    "broken-path authorship demand is counted even when fewer than three referrers name it");
+
+  const assay = () => repository.census("--section", "services/a-section", "--only", "--assert", "brokenLinks<=0");
+  assert.equal(assay().status, 1, "the actual original census sees the open condition");
   repository.write(A, "# A\n\nSee [b](../b-section/README.md).\n");
   repository.commit("repair");
-  assert.equal(assay(), 0, "the condition holds once the section is repaired");
+  assert.equal(assay().status, 0, "the original independent census observes the corrected source");
 });

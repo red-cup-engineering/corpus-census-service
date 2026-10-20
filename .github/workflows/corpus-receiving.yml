@@ -1,0 +1,39 @@
+name: Verify original corpus records and source repairs
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/corpus-receiving.yml'
+      - 'src/**'
+      - 'scripts/**'
+      - 'test/**'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/corpus-receiving.yml'
+      - 'src/**'
+      - 'scripts/**'
+      - 'test/**'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-corpus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - name: Install the original pinned corpus dependencies
+        run: npm ci --no-audit --no-fund --ignore-scripts --fetch-retries=0 --fetch-timeout=30000
+      - name: Check original code, source writer and ledger reader
+        run: |
+          npm run check
+          npm test
