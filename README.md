@@ -1,5 +1,12 @@
 # @red-cup-engineering/corpus-census-service
 
+<!-- 561-group-standards:badges:start -->
+[![Red Cup Engineering](https://img.shields.io/badge/561%20Group-Red%20Cup%20Engineering-c0392b)](https://github.com/red-cup-engineering)
+[![License: MIT](https://img.shields.io/badge/license-MIT-c0392b)](LICENSE)
+[![Indigenous data: CARE](https://img.shields.io/badge/Indigenous%20data-CARE-4b6f44)](https://github.com/red-cup-engineering/.github/blob/main/GOVERNANCE.md)
+[![Tips welcome](https://img.shields.io/badge/tips-welcome-d4a017)](https://github.com/561-group/.github/blob/main/TIPS.md)
+<!-- 561-group-standards:badges:end -->
+
 The corpus admission ledger: one census of every content carrier a revision tracks, so the 561 Group can see the state of its whole knowledge corpus, not only its glossaries, in one record.
 It is waves 1.1 and 1.5 of [the corpus knowledge graph program](../../../../../../../../../science-services-section/services/information-science-services-section/services/knowledge-services-section/services/knowledge-organization-services-section/content/text/documents/articles/notes/2026/09/30/2026-09-30-the-corpus-knowledge-graph-program.md).
 The [glossary census](../computer-glossary-systems-engineering-services-section/services/glossary-census-service/README.md) is the glossary-only case it generalizes.
