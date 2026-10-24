@@ -31,9 +31,9 @@
     "@red-cup-engineering/computer-file-engineering-services-section": "0.4.0",
     "@red-cup-engineering/bibliography-engineering-services-section": "0.5.1",
     "@red-cup-engineering/carrier-kind-engineering-services-section": "0.1.1",
-    "@red-cup-engineering/git-services-section": "0.1.2",
-    "@red-cup-engineering/javascript-file-services-section": "0.1.1",
-    "@red-cup-engineering/javascript-node-services-section": "0.3.2",
+    "@red-cup-engineering/git-engineering-services-section": "0.1.2",
+    "@red-cup-engineering/javascript-file-engineering-services-section": "0.1.1",
+    "@red-cup-engineering/javascript-node-engineering-services-section": "0.3.2",
     "@red-cup-engineering/markdown-engineering-services-section": "0.5.2",
     "@red-cup-engineering/term-engineering-services-section": "0.3.2",
     "@red-cup-engineering/organizing": "0.2.3"
