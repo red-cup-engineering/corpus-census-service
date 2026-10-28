@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://561.group/ns/schema/corpus-source-custody-output-1.0.0",
+  "title": "Non-authoritative complete Git source custody byte-identity assay",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "sources", "counts", "rows", "authority", "semanticStatus"],
+  "properties": {
+    "kind": { "const": "corpus.source-custody-assay/v1" },
+    "sources": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "#/$defs/source" } },
+    "counts": { "type": "object", "additionalProperties": false,
+      "required": ["exactThreeWay", "equalHistoricalOnly", "differentHistoricalBytes", "originalOnly", "legacyOnly", "ambiguousCanonical", "noCanonicalBlob"],
+      "properties": {
+        "exactThreeWay": { "$ref": "#/$defs/count" },
+        "equalHistoricalOnly": { "$ref": "#/$defs/count" },
+        "differentHistoricalBytes": { "$ref": "#/$defs/count" },
+        "originalOnly": { "$ref": "#/$defs/count" },
+        "legacyOnly": { "$ref": "#/$defs/count" },
+        "ambiguousCanonical": { "$ref": "#/$defs/count" },
+        "noCanonicalBlob": { "$ref": "#/$defs/count" }
+      }
+    },
+    "rows": { "type": "array", "items": { "$ref": "#/$defs/row" } },
+    "authority": { "const": "source-bytes-only-no-content-grant-no-retirement-effect" },
+    "semanticStatus": { "const": "byte-identity-not-proposition-equivalence-or-machine-checked-proof" }
+  },
+  "$defs": {
+    "count": { "type": "integer", "minimum": 0 },
+    "oid": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" },
+    "source": { "type": "object", "additionalProperties": false, "required": ["role", "repository", "revision", "prefix", "coverage"],
+      "properties": {
+        "role": { "enum": ["original", "legacy", "canonical"] },
+        "repository": { "type": "string" },
+        "revision": { "$ref": "#/$defs/oid" },
+        "prefix": { "type": "string" },
+        "coverage": { "const": "complete" }
+      }
+    },
+    "row": { "type": "object", "additionalProperties": false,
+      "required": ["path", "originalBlob", "legacyBlob", "canonicalPaths", "canonicalStatus", "relation"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "originalBlob": { "anyOf": [{ "$ref": "#/$defs/oid" }, { "type": "null" }] },
+        "legacyBlob": { "anyOf": [{ "$ref": "#/$defs/oid" }, { "type": "null" }] },
+        "canonicalPaths": { "type": "array", "items": { "type": "string" } },
+        "canonicalStatus": { "enum": ["unobserved", "unique-byte-peer", "ambiguous-byte-peers"] },
+        "relation": { "enum": ["original-only", "legacy-only", "different-historical-bytes", "exact-three-way", "equal-historical-only"] }
+      }
+    }
+  }
+}
