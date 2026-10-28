@@ -16,6 +16,11 @@ const MAX_ENTRIES = 50_000;
 const MAX_PATH = 4096;
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
 const compare = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+const CUT_KEYS = new Set(["kind", "repository", "revision", "prefix", "coverage", "entries"]);
+const ENTRY_KEYS = new Set(["path", "blob", "bytes"]);
+const PACKET_KEYS = new Set(["original", "legacy", "canonical"]);
+const hasUnexpectedKey = (value, keys) => Object.keys(value).some(key => !keys.has(key));
+const canonicalStatusOf = paths => paths.length === 0 ? "unobserved" : paths.length === 1 ? "unique-byte-peer" : "ambiguous-byte-peers";
 
 function sourcePath(path) {
   if (typeof path !== "string" || !path || path.length > MAX_PATH ||
@@ -26,7 +31,7 @@ function sourcePath(path) {
 }
 
 function sourceCut(input, role) {
-  if (!isRecord(input) || input.kind !== SOURCE_CUT_KIND ||
+  if (!isRecord(input) || hasUnexpectedKey(input, CUT_KEYS) || input.kind !== SOURCE_CUT_KIND ||
       !REPOSITORY.test(input.repository ?? "") ||
       !OID.test(input.revision ?? "") ||
       input.coverage !== "complete" ||
@@ -36,7 +41,7 @@ function sourceCut(input, role) {
     throw new TypeError(role + ": source cut requires one complete, revision-locked Git provider observation");
   const paths = new Set();
   const entries = input.entries.map(row => {
-    if (!isRecord(row) || !OID.test(row.blob ?? ""))
+    if (!isRecord(row) || hasUnexpectedKey(row, ENTRY_KEYS) || !OID.test(row.blob ?? ""))
       throw new TypeError(role + ": missing original Git blob object identity");
     const path = sourcePath(row.path);
     if (paths.has(path)) throw new TypeError(role + ": repeated path in source cut");
@@ -59,7 +64,10 @@ function sourceCut(input, role) {
  * not deletion authorization: links, citations, grants, semantic equivalence,
  * and consumer receiving are deliberately outside this pure byte assay.
  */
-export function assaySourceCustody({ original, legacy, canonical } = {}) {
+export function assaySourceCustody(packet = {}) {
+  if (!isRecord(packet) || hasUnexpectedKey(packet, PACKET_KEYS))
+    throw new TypeError("source custody packet must contain only the three original source cuts");
+  const { original, legacy, canonical } = packet;
   const cuts = [sourceCut(original, "original"), sourceCut(legacy, "legacy"), sourceCut(canonical, "canonical")];
   const [first, second, current] = cuts;
   if (new Set(cuts.map(cut => cut.repository)).size !== 3)
@@ -74,29 +82,43 @@ export function assaySourceCustody({ original, legacy, canonical } = {}) {
   }
   const rows = [];
   const counts = { exactThreeWay: 0, equalHistoricalOnly: 0, differentHistoricalBytes: 0,
-    originalOnly: 0, legacyOnly: 0, ambiguousCanonical: 0, noCanonicalBlob: 0 };
+    originalOnly: 0, legacyOnly: 0, ambiguousCanonical: 0, noCanonicalBlob: 0,
+    divergentOriginalExactOnly: 0, divergentLegacyExactOnly: 0,
+    divergentBothExact: 0, divergentNoSingleExact: 0 };
   for (const entry of first.entries) {
     const peer = legacyByPath.get(entry.path);
     const homes = canonicalByBlob.get(entry.blob) ?? [];
-    const canonicalStatus = homes.length === 0 ? "unobserved" : homes.length === 1 ? "unique-byte-peer" : "ambiguous-byte-peers";
+    const legacyHomes = peer ? canonicalByBlob.get(peer.blob) ?? [] : [];
+    const canonicalStatus = canonicalStatusOf(homes);
+    const legacyCanonicalStatus = canonicalStatusOf(legacyHomes);
     let relation;
     if (!peer) { relation = "original-only"; counts.originalOnly++; }
-    else if (peer.blob !== entry.blob) { relation = "different-historical-bytes"; counts.differentHistoricalBytes++; }
+    else if (peer.blob !== entry.blob) {
+      relation = "different-historical-bytes"; counts.differentHistoricalBytes++;
+      const originalExact = homes.length === 1;
+      const legacyExact = legacyHomes.length === 1;
+      if (originalExact && legacyExact) counts.divergentBothExact++;
+      else if (originalExact) counts.divergentOriginalExactOnly++;
+      else if (legacyExact) counts.divergentLegacyExactOnly++;
+      else counts.divergentNoSingleExact++;
+    }
     else if (homes.length === 1) { relation = "exact-three-way"; counts.exactThreeWay++; }
     else { relation = "equal-historical-only"; counts.equalHistoricalOnly++; }
     if (homes.length === 0) counts.noCanonicalBlob++;
     if (homes.length > 1) counts.ambiguousCanonical++;
     rows.push(Object.freeze({ path: entry.path, originalBlob: entry.blob,
       legacyBlob: peer?.blob ?? null, canonicalPaths: Object.freeze([...homes]),
-      canonicalStatus, relation }));
+      canonicalStatus, legacyCanonicalPaths: Object.freeze([...legacyHomes]),
+      legacyCanonicalStatus, relation }));
   }
   for (const entry of second.entries) if (!originalByPath.has(entry.path)) {
     counts.legacyOnly++;
+    const legacyHomes = canonicalByBlob.get(entry.blob) ?? [];
     rows.push(Object.freeze({ path: entry.path, originalBlob: null,
-      legacyBlob: entry.blob, canonicalPaths: Object.freeze([...(canonicalByBlob.get(entry.blob) ?? [])]),
-      canonicalStatus: (canonicalByBlob.get(entry.blob) ?? []).length === 1 ? "unique-byte-peer"
-        : (canonicalByBlob.get(entry.blob) ?? []).length > 1 ? "ambiguous-byte-peers" : "unobserved",
-      relation: "legacy-only" }));
+      legacyBlob: entry.blob, canonicalPaths: Object.freeze([...legacyHomes]),
+      canonicalStatus: canonicalStatusOf(legacyHomes),
+      legacyCanonicalPaths: Object.freeze([...legacyHomes]),
+      legacyCanonicalStatus: canonicalStatusOf(legacyHomes), relation: "legacy-only" }));
   }
   rows.sort((left, right) => compare(left.path, right.path));
   return Object.freeze({ kind: SOURCE_CUSTODY_ASSAY_KIND,
