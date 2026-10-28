@@ -38,6 +38,8 @@ test("SHA-qualified speech-act manuscripts map to exactly one original Science h
   assert.equal(result.counts.noCanonicalBlob, 2);
   assert.equal(result.rows.length, 5);
   assert.equal(result.rows[0].canonicalStatus, "unique-byte-peer");
+  assert.equal(result.rows[0].legacyCanonicalStatus, "unique-byte-peer");
+  assert.equal(result.counts.divergentNoSingleExact, 1);
   assert.equal(result.rows[0].canonicalPaths[0], "prose/learning/claims/klein-four-stratifies-locution-illocution-perlocution.md");
   assert.match(result.authority, /no-content-grant/);
   assert.ok(result.sources.every(entry => entry.coverage === "complete"));
@@ -80,6 +82,9 @@ test("incomplete, forged, repeated or unsafe source cuts refuse without inferrin
     x => { x.original.entries[0].bytes = -1; },
     x => { x.original.repository = x.legacy.repository; },
     x => { x.canonical.entries = null; },
+    x => { x.canonical.authority = "all"; },
+    x => { x.legacy.entries[0].grant = "allow"; },
+    x => { x.extraRegistry = "fabricated"; },
   ];
   for (const edit of edits) {
     const data = make(); edit(data);
@@ -87,6 +92,44 @@ test("incomplete, forged, repeated or unsafe source cuts refuse without inferrin
   }
 });
 
+
+test("divergent historical copies retain both independent Science byte readings", () => {
+  const original = make();
+  // In the original corpus c != e. The original has no canonical peer; the
+  // nonidentical legacy e DOES have a current Science byte peer.
+  original.canonical.entries.push({ path: "prose/surveys/legacy-reading.md", blob: sha("e") });
+  const result = assaySourceCustody(original);
+  const row = result.rows.find(item => item.path === "predication-state-of-the-theory.md");
+  assert.equal(row.relation, "different-historical-bytes");
+  assert.deepEqual(row.canonicalPaths, []);
+  assert.deepEqual(row.legacyCanonicalPaths, ["prose/surveys/legacy-reading.md"]);
+  assert.equal(row.legacyCanonicalStatus, "unique-byte-peer");
+  assert.equal(result.counts.divergentLegacyExactOnly, 1);
+  assert.equal(result.counts.divergentNoSingleExact, 0);
+});
+
+test("two different versions may each have a distinct canonical home, without being collapsed", () => {
+  const x = make();
+  x.canonical.entries.push({ path: "prose/surveys/original-reading.md", blob: sha("c") });
+  x.canonical.entries.push({ path: "prose/surveys/legacy-reading.md", blob: sha("e") });
+  const got = assaySourceCustody(x);
+  const row = got.rows.find(item => item.path === "predication-state-of-the-theory.md");
+  assert.deepEqual(row.canonicalPaths, ["prose/surveys/original-reading.md"]);
+  assert.deepEqual(row.legacyCanonicalPaths, ["prose/surveys/legacy-reading.md"]);
+  assert.equal(got.counts.divergentBothExact, 1);
+  assert.equal(row.relation, "different-historical-bytes");
+});
+
+test("duplicate canonical bytes remain ambiguous for the legacy variant", () => {
+  const x = make();
+  x.canonical.entries.push({ path: "x/e.md", blob: sha("e") });
+  x.canonical.entries.push({ path: "y/e.md", blob: sha("e") });
+  const got = assaySourceCustody(x);
+  const row = got.rows.find(item => item.path === "predication-state-of-the-theory.md");
+  assert.equal(row.legacyCanonicalStatus, "ambiguous-byte-peers");
+  assert.equal(got.counts.divergentNoSingleExact, 1);
+  assert.equal(got.counts.divergentLegacyExactOnly, 0);
+});
 
 test("the bounded native CLI reads one complete snapshot and refuses malformed source", () => {
   const script = fileURLToPath(new URL("../scripts/assay-source-custody.mjs", import.meta.url));
