@@ -11,14 +11,19 @@
     ".": "./src/corpus-census.mjs",
     "./package.json": "./package.json",
     "./knowledge-debt-reports": "./src/knowledge-debt-reports.mjs",
-    "./corpus-ledger": "./src/corpus-ledger.mjs"
+    "./corpus-ledger": "./src/corpus-ledger.mjs",
+    "./source-custody": "./src/source-custody.mjs",
+    "./schemas/source-custody-input.schema.json": "./data/schemas/source-custody-input.schema.json",
+    "./schemas/source-custody-output.schema.json": "./data/schemas/source-custody-output.schema.json"
   },
   "bin": {
     "census-corpus": "scripts/census-corpus.mjs"
   },
   "files": [
     "src/",
-    "scripts/"
+    "scripts/",
+    "data/schemas/source-custody-input.schema.json",
+    "data/schemas/source-custody-output.schema.json"
   ],
   "scripts": {
     "check": "node --check src/*.mjs && node --check scripts/*.mjs && node --check test/*.test.mjs",

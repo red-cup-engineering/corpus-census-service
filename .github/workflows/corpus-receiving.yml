@@ -8,6 +8,7 @@ on:
       - 'test/**'
       - 'package.json'
       - 'package-lock.json'
+      - 'data/schemas/source-custody*.schema.json'
   push:
     branches: [main]
     paths:
@@ -17,10 +18,26 @@ on:
       - 'test/**'
       - 'package.json'
       - 'package-lock.json'
+      - 'data/schemas/source-custody*.schema.json'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
+  custody-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+      - name: Check the original source-custody pure read and refusal behavior
+        run: |
+          node --check src/source-custody.mjs
+          node --check scripts/assay-source-custody.mjs
+          node --test test/source-custody.test.mjs
   native-corpus:
     runs-on: ubuntu-latest
     timeout-minutes: 10
